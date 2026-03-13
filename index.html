@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sri Renga Jewellers | Premium Collections</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+    rel="stylesheet">
+
+  <!-- Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+  <!-- App Header & Nav -->
+  <nav class="navbar glass">
+    <div class="logo-container">
+      <!-- Shop Logo -->
+      <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+        <img src="logo.jpg" alt="Sri Renga Jewellers Logo" style="height: 48px; width: auto; border-radius: 4px;">
+        <h1 class="logo-text serif text-gold">Sri Renga Jewellers</h1>
+      </a>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#collections">Collections</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="login.html" class="icon-btn" aria-label="User account">
+        <i data-lucide="user"></i>
+      </a>
+      <button class="icon-btn" id="cart-toggle" aria-label="Cart">
+        <i data-lucide="shopping-bag"></i>
+        <span class="cart-badge" id="cart-count">0</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Live Rates Ticker -->
+  <div class="rates-ticker">
+    <span><span class="pulse"></span> 22K Gold Rate: <b id="gold-rate">₹6,540</b> / gram</span>
+    <span><span class="pulse"></span> 92.5 Silver Rate: <b id="silver-rate">₹78</b> / gram</span>
+  </div>
+
+  <main>
+    <!-- Hero Section -->
+    <section id="home" class="hero">
+      <div class="hero-content">
+        <h1 class="serif text-gold">Discover Pure Elegance</h1>
+        <p>Crafting timeless beauty across generations. Explore our exquisite collection of Gold, Silver, and Boutique
+          Jewellery.</p>
+        <a href="#collections" class="btn btn-primary">Explore Collections</a>
+      </div>
+    </section>
+
+    <!-- Collections Section -->
+    <section id="collections" class="section">
+      <h2 class="section-title serif"><span class="text-gold">Our Exclusive</span> Collections</h2>
+      
+      <!-- Filter Tabs -->
+      <div class="filter-container">
+        <button class="filter-btn active" data-filter="all">All Collections</button>
+        <button class="filter-btn" data-filter="gold">Gold Jewellery</button>
+        <button class="filter-btn" data-filter="silver">92.5 Silver Collection</button>
+      </div>
+
+      <!-- Silver Sub-Categories (Hidden by default) -->
+      <div class="sub-filter-container hidden" id="silver-sub-filters">
+        <button class="sub-filter-btn active" data-subfilter="all-silver">All Silver</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Rings">Rings</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Pendants">Pendants</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Studs">Studs</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Toe Rings">Toe Rings</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Chains">Chains</button>
+        <button class="sub-filter-btn" data-subfilter="Silver Bracelets">Bracelets</button>
+      </div>
+
+      <div class="products-grid" id="products-container">
+        <!-- Products will be dynamically inserted here via app.js -->
+      </div>
+      
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer id="contact" class="footer">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4 class="serif">Sri Renga Jewellers</h4>
+        <p>Your trusted destiny for premium jewellery, combining traditional heritage with modern elegance.</p>
+        <div class="social-links" style="margin-top: 15px; display: flex; gap: 15px;">
+          <a href="https://www.instagram.com/sri_renga_jewellers_rjpm/" target="_blank" aria-label="Instagram" class="text-gold" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 215, 0, 0.1); text-decoration: none; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255, 215, 0, 0.2)'" onmouseout="this.style.background='rgba(255, 215, 0, 0.1)'">
+            <i data-lucide="instagram"></i>
+          </a>
+          <a href="https://www.youtube.com/@SRIRENGAJEWELLERS" target="_blank" aria-label="YouTube" class="text-gold" style="display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 215, 0, 0.1); text-decoration: none; transition: background 0.3s ease;" onmouseover="this.style.background='rgba(255, 215, 0, 0.2)'" onmouseout="this.style.background='rgba(255, 215, 0, 0.1)'">
+            <i data-lucide="youtube"></i>
+          </a>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4 class="serif">Our Services</h4>
+        <ul>
+          <li>Gold Jewellery</li>
+          <li>92.5 Silver Jewellery</li>
+          <li>Gold Polish Silver Ornaments</li>
+          <li>Baby Jewellery Collections</li>
+          <li>Boutique Jewellery</li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4 class="serif">Visit Us</h4>
+        <p><i data-lucide="map-pin"
+            style="width: 16px; display: inline-block; vertical-align: middle; margin-right: 5px;"
+            class="text-gold"></i> 924A Thenkasi Road, Old Bus Stand Opposite, Near Vinayaga Temple, Rajapalayam, Tamil
+          Nadu 626117</p>
+        <p><i data-lucide="phone" style="width: 16px; display: inline-block; vertical-align: middle; margin-right: 5px;"
+            class="text-gold"></i> +91 9842601667</p>
+        <p><i data-lucide="clock" style="width: 16px; display: inline-block; vertical-align: middle; margin-right: 5px;"
+            class="text-gold"></i> 10:00 AM – 9:00 PM (Mon–Sun)</p>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>&copy; 2026 Sri Renga Jewellers. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Cart Drawer -->
+  <div class="cart-overlay" id="cart-overlay"></div>
+  <div class="cart-drawer" id="cart-drawer">
+    <div class="cart-header">
+      <h3 class="serif text-gold">Your Selection</h3>
+      <button class="close-cart" id="close-cart">
+        <i data-lucide="x"></i>
+      </button>
+    </div>
+    <div class="cart-body" id="cart-items">
+      <!-- Cart items injected here -->
+      <p class="cart-empty">Your selection is empty.</p>
+    </div>
+    <div class="cart-footer">
+      <div class="cart-summary">
+        <span>Total Items:</span>
+        <span class="text-gold" id="cart-total-weight">0</span>
+      </div>
+      <a href="checkout.html" class="btn btn-primary" style="width: 100%; display: block; text-align: center;">Proceed
+        to Enquire</a>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+
+</html>

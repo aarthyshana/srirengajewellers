@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enquire & Checkout | Sri Renga Jewellers</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .checkout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 3rem;
+            max-width: 1000px;
+            margin: 8rem auto 4rem;
+            padding: 0 5%;
+        }
+
+        .checkout-panel {
+            padding: 2.5rem;
+        }
+
+        .checkout-title {
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-subtle);
+            padding-bottom: 1rem;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .summary-item-title {
+            font-weight: 500;
+        }
+
+        .summary-item-weight {
+            color: var(--gold-primary);
+        }
+
+        .success-message {
+            text-align: center;
+            padding: 3rem;
+        }
+
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            color: #10b981;
+            margin: 0 auto 1.5rem;
+            padding: 1.5rem;
+            border-radius: 50%;
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        @media (max-width: 768px) {
+            .checkout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Minimal Navbar -->
+    <nav class="navbar glass">
+        <div class="logo-container">
+            <a href="index.html" style="text-decoration: none; display: flex; align-items: center; gap: 10px;">
+                <i data-lucide="gem" class="text-gold" style="width: 28px; height: 28px;"></i>
+                <h1 class="logo-text serif text-gold">Sri Renga</h1>
+            </a>
+        </div>
+        <a href="index.html" class="nav-links"
+            style="color: var(--text-muted); text-decoration: none; font-size: 0.9rem;">
+            <i data-lucide="arrow-left" style="width: 16px; display: inline-block; vertical-align: middle;"></i> Return
+            to Store
+        </a>
+    </nav>
+
+    <div class="checkout-grid" id="checkout-content">
+
+        <!-- Enqueue Details -->
+        <div class="checkout-panel glass">
+            <h2 class="serif text-gold checkout-title">Contact Information</h2>
+            <form id="checkout-form">
+                <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="phone" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label for="email">Email Address (Optional)</label>
+                    <input type="email" id="email" class="form-input">
+                </div>
+
+                <h3 class="serif text-gold" style="margin: 2rem 0 1rem; font-size: 1.2rem;">Enquiry Details</h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.5rem;">
+                    Please submit this enquiry and our store representative will contact you with the exact price
+                    details, including making charges, depending on today's gold rate.
+                </p>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Submit Jewellery Enquiry</button>
+            </form>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="checkout-panel glass">
+            <h2 class="serif text-gold checkout-title">Selection Summary</h2>
+            <div id="checkout-items">
+                <!-- JS iterates here -->
+            </div>
+
+            <div style="margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid var(--border-subtle);">
+                <div style="display: flex; justify-content: space-between; font-weight: 600; font-size: 1.2rem;">
+                    <span>Total Selected Items</span>
+                    <span class="text-gold" id="checkout-total-items">0</span>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Success State Container -->
+    <div id="success-state" class="checkout-panel glass hidden" style="max-width: 600px; margin: 10rem auto;">
+        <div class="success-message">
+            <i data-lucide="check-circle" class="success-icon"></i>
+            <h2 class="serif text-gold" style="font-size: 2.5rem; margin-bottom: 1rem;">Enquiry Received!</h2>
+            <p style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.1rem;">
+                Thank you for choosing <b>Sri Renga Jewellers</b>. Our executive will reach out to you shortly at the
+                provided contact details regarding pricing and purchase options for your selected items.
+            </p>
+            <a href="index.html" class="btn btn-outline" style="border-radius: var(--radius-full);">Return to Home
+                Page</a>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+    <script>
+        lucide.createIcons();
+
+        // Load cart details on checkout page
+        document.addEventListener('DOMContentLoaded', () => {
+            const checkoutItemsContainer = document.getElementById('checkout-items');
+            const checkoutTotalItems = document.getElementById('checkout-total-items');
+
+            let cartData = JSON.parse(localStorage.getItem('sri_renga_cart')) || [];
+
+            if (cartData.length === 0) {
+                checkoutItemsContainer.innerHTML = '<p style="color: var(--text-muted);">No items selected for enquiry.</p>';
+            } else {
+                checkoutItemsContainer.innerHTML = cartData.map(item => `
+          <div class="summary-item">
+            <div>
+              <div class="summary-item-title">${item.title}</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted);">${item.category}</div>
+            </div>
+            <div class="summary-item-weight">${item.weight}</div>
+          </div>
+        `).join('');
+
+                checkoutTotalItems.innerText = cartData.length;
+            }
+        });
+
+        // Handle form submission
+        document.getElementById('checkout-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const btn = this.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i data-lucide="loader-2" class="pulse" style="animation-duration: 1s;"></i> Processing...';
+            lucide.createIcons();
+
+            const name = document.getElementById('name').value;
+            const phone = document.getElementById('phone').value;
+            const email = document.getElementById('email').value;
+
+            // Get product IDs from cart data
+            let cartData = [];
+            try {
+                cartData = JSON.parse(localStorage.getItem('sri_renga_cart')) || [];
+            } catch (e) { console.error('Error parsing cart data', e); }
+
+            const product_ids = cartData.map(item => item.id);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/enquiry', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name, phone, email, product_ids })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Clear cart
+                    localStorage.removeItem('sri_renga_cart');
+
+                    // Hide form, show success
+                    document.getElementById('checkout-content').classList.add('hidden');
+                    document.getElementById('success-state').classList.remove('hidden');
+                } else {
+                    alert("Failed to submit enquiry: " + (data.error || "Unknown error"));
+                    btn.innerHTML = originalText;
+                }
+            } catch (err) {
+                console.error(err);
+                alert("Error connecting to the server. Is the backend running?");
+                btn.innerHTML = originalText;
+            }
+        });
+    </script>
+</body>
+
+</html>

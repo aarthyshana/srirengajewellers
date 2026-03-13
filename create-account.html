@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Account | Sri Renga Jewellers</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="chit-styles.css">
+    <style>
+        .row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .row>.input-group {
+            flex: 1;
+        }
+
+        textarea.input-field {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #fff;
+            font-family: 'Inter', sans-serif;
+            resize: vertical;
+            min-height: 80px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        textarea.input-field:focus {
+            border-color: #dfb163;
+            box-shadow: 0 0 10px rgba(223, 177, 99, 0.2);
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        textarea.input-field::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        /* Custom styles to handle input height for text */
+        .register-card {
+            max-width: 500px;
+            margin: 40px auto;
+        }
+
+        .error-message {
+            color: #ff6b6b;
+            font-size: 0.8rem;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+
+<body class="bg-dark-jewel login-page">
+    <div class="glass-container login-card register-card fade-in">
+        <div class="logo-container">
+            <h1 class="brand-title">Sri Renga<span>Jewellers</span></h1>
+            <p class="brand-subtitle">Create Your Account</p>
+        </div>
+
+        <form id="registerForm" class="login-form">
+            <div class="row">
+                <div class="input-group">
+                    <label for="firstName">First Name <span style="color:#dfb163">*</span></label>
+                    <div class="input-wrapper">
+                        <input type="text" id="firstName" name="firstName" placeholder="First Name" required
+                            autocomplete="given-name">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="lastName">Last Name</label>
+                    <div class="input-wrapper">
+                        <input type="text" id="lastName" name="lastName" placeholder="Last Name"
+                            autocomplete="family-name">
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="phone">Phone Number <span style="color:#dfb163">*</span></label>
+                <div class="input-wrapper">
+                    <input type="tel" id="phone" name="phone" placeholder="Enter your phone number" required
+                        autocomplete="tel">
+                    <span class="icon">&#128241;</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="email">Email ID</label>
+                <div class="input-wrapper">
+                    <input type="email" id="email" name="email" placeholder="Enter your email ID (Optional)"
+                        autocomplete="email">
+                    <span class="icon">&#9993;</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="address">Home Address <span style="color:#dfb163">*</span></label>
+                <div class="input-wrapper" style="border: none; background: transparent; padding: 0;">
+                    <textarea id="address" name="address" class="input-field" placeholder="Enter your home address"
+                        required></textarea>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="password">Password <span style="color:#dfb163">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Create a password" required>
+                    <span class="icon eye-toggle" id="togglePassword">&#128065;</span>
+                </div>
+
+                <div class="password-requirements" id="passwordReqs">
+                    <p class="req-title">Password must contain:</p>
+                    <ul>
+                        <li id="req-length" class="invalid">At least 8 characters</li>
+                        <li id="req-upper" class="invalid">1 Uppercase letter</li>
+                        <li id="req-lower" class="invalid">1 Lowercase letter</li>
+                        <li id="req-number" class="invalid">1 Number</li>
+                        <li id="req-special" class="invalid">1 Special character (@$!%*?&)</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="confirmPassword">Reconfirm Password <span style="color:#dfb163">*</span></label>
+                <div class="input-wrapper">
+                    <input type="password" id="confirmPassword" name="confirmPassword"
+                        placeholder="Re-enter your password" required>
+                    <span class="icon eye-toggle" id="toggleConfirmPassword">&#128065;</span>
+                </div>
+                <div id="passwordMismatchError" class="error-message">Passwords do not match</div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="registerBtn" disabled style="margin-top: 20px;">
+                Create Account
+                <span class="arrow">&rarr;</span>
+            </button>
+
+            <p class="signup-prompt">Already have an account? <a href="login.html">Sign In here</a></p>
+        </form>
+    </div>
+
+    <!-- Background decorative elements -->
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+
+    <script src="chit-script.js"></script>
+    <script>
+        // Form Validation Logic for Register Page
+        document.addEventListener('DOMContentLoaded', () => {
+            const registerForm = document.getElementById('registerForm');
+            const passwordInput = document.getElementById('password');
+            const confirmPasswordInput = document.getElementById('confirmPassword');
+            const firstNameInput = document.getElementById('firstName');
+            const phoneInput = document.getElementById('phone');
+            const registerBtn = document.getElementById('registerBtn');
+            const passwordMismatchError = document.getElementById('passwordMismatchError');
+            const toggleConfirmPassword = document.getElementById('toggleConfirmPassword');
+            const togglePassword = document.getElementById('togglePassword');
+            const passwordReqs = document.getElementById('passwordReqs');
+
+            // Validation elements
+            const reqLength = document.getElementById('req-length');
+            const reqUpper = document.getElementById('req-upper');
+            const reqLower = document.getElementById('req-lower');
+            const reqNumber = document.getElementById('req-number');
+            const reqSpecial = document.getElementById('req-special');
+
+            // Toggle password visibility
+            if (togglePassword) {
+                togglePassword.addEventListener('click', function () {
+                    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    passwordInput.setAttribute('type', type);
+                    togglePassword.innerHTML = type === 'password' ? '&#128065;' : '&#10006;';
+                });
+            }
+
+            // Toggle confirm password visibility
+            if (toggleConfirmPassword) {
+                toggleConfirmPassword.addEventListener('click', function () {
+                    const type = confirmPasswordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                    confirmPasswordInput.setAttribute('type', type);
+                    toggleConfirmPassword.innerHTML = type === 'password' ? '&#128065;' : '&#10006;';
+                });
+            }
+
+            // Show requirements box on focus
+            passwordInput.addEventListener('focus', () => {
+                passwordReqs.classList.add('show');
+            });
+
+            // Regular expressions for password validation
+            const lengthRegex = /.{8,}/;
+            const upperRegex = /[A-Z]/;
+            const lowerRegex = /[a-z]/;
+            const numberRegex = /[0-9]/;
+            const specialRegex = /[@$!%*?&]/;
+
+            function validateForm() {
+                const isFirstNameValid = firstNameInput.value.trim() !== '';
+                const isPhoneValid = phoneInput.value.trim() !== '';
+                const isAddressValid = document.getElementById('address').value.trim() !== '';
+
+                const pwd = passwordInput.value;
+
+                // Visual validation
+                reqLength.className = lengthRegex.test(pwd) ? 'valid' : 'invalid';
+                reqUpper.className = upperRegex.test(pwd) ? 'valid' : 'invalid';
+                reqLower.className = lowerRegex.test(pwd) ? 'valid' : 'invalid';
+                reqNumber.className = numberRegex.test(pwd) ? 'valid' : 'invalid';
+                reqSpecial.className = specialRegex.test(pwd) ? 'valid' : 'invalid';
+
+                const isPasswordValid = lengthRegex.test(pwd) &&
+                    upperRegex.test(pwd) &&
+                    lowerRegex.test(pwd) &&
+                    numberRegex.test(pwd) &&
+                    specialRegex.test(pwd);
+
+                const isConfirmPasswordValid = confirmPasswordInput.value === pwd && confirmPasswordInput.value !== '';
+
+                if (confirmPasswordInput.value !== '' && confirmPasswordInput.value !== pwd) {
+                    passwordMismatchError.classList.add('show');
+                } else {
+                    passwordMismatchError.classList.remove('show');
+                }
+
+                if (isFirstNameValid && isPhoneValid && isAddressValid && isPasswordValid && isConfirmPasswordValid) {
+                    registerBtn.removeAttribute('disabled');
+                } else {
+                    registerBtn.setAttribute('disabled', 'true');
+                }
+            }
+
+            // Attach event listeners
+            firstNameInput.addEventListener('input', validateForm);
+            phoneInput.addEventListener('input', validateForm);
+            document.getElementById('address').addEventListener('input', validateForm);
+            passwordInput.addEventListener('input', validateForm);
+            confirmPasswordInput.addEventListener('input', validateForm);
+
+            registerForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                registerBtn.innerHTML = 'Creating Account... <span class="spinner"></span>';
+                setTimeout(() => {
+                    alert('Account created successfully!');
+                    window.location.href = 'login.html';
+                }, 1500);
+            });
+        });
+    </script>
+</body>
+
+</html>
