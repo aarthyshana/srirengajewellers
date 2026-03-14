@@ -9,6 +9,9 @@ const port = process.env.port || 3000;
 app.use(cors());
 app.use(express.json());
 
+// serve frontend
+app.use(express.static(path.join(__dirname, '../public')));
+
 // Connect to SQLite Database (this will create it if it doesn't exist)
 const db = new sqlite3.Database('./database.sqlite', (err) => {
     if (err) {
