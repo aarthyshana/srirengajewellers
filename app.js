@@ -1,79 +1,65 @@
-// Mock Data corresponding to the generated images
-const products = [
-    {
-        id: 1,
-        title: "Antique 22k Gold Heritage Necklace",
-        category: "Gold",
-        weight: "45.500g",
-        image: "C:/Users/WELCOME/.gemini/antigravity/brain/a5bcd5c8-56e8-4af2-9c5f-59794b42d838/gold_necklace_1772701254129.png"
-    },
-    {
-        id: 2,
-        title: "Bridal Antique 22k Gold Ring",
-        category: "Gold",
-        weight: "6.200g",
-        image: "C:/Users/WELCOME/.gemini/antigravity/brain/a5bcd5c8-56e8-4af2-9c5f-59794b42d838/gold_ring_1772701320587.png"
-    },
-    {
-        id: 3,
-        title: "92.5 Sterling Silver Crafted Bangle",
-        category: "Silver Bracelets",
-        weight: "24.350g",
-        image: "C:/Users/WELCOME/.gemini/antigravity/brain/a5bcd5c8-56e8-4af2-9c5f-59794b42d838/silver_bangle_1772701291338.png"
-    },
-    {
-        id: 4,
-        title: "Delicate Gold Baby Chain",
-        category: "Gold",
-        weight: "4.150g",
-        image: "C:/Users/WELCOME/.gemini/antigravity/brain/a5bcd5c8-56e8-4af2-9c5f-59794b42d838/baby_chain_1772701342271.png"
-    },
-    {
-        id: 5,
-        title: "Elegant Silver Solitaire Ring",
-        category: "Silver Rings",
-        weight: "4.500g",
-        image: "https://images.unsplash.com/photo-1605100804763-247f67b2938e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
-    },
-    {
-        id: 6,
-        title: "Classic Silver Floral Pendant",
-        category: "Silver Pendants",
-        weight: "3.200g",
-        image: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
-    },
-    {
-        id: 7,
-        title: "Simple Silver Pearl Studs",
-        category: "Silver Studs",
-        weight: "2.100g",
-        image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
-    },
-    {
-        id: 8,
-        title: "Traditional Silver Toe Ring",
-        category: "Silver Toe Rings",
-        weight: "5.500g",
-        image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
-    },
-    {
-        id: 9,
-        title: "Classic Silver Chain",
-        category: "Silver Chains",
-        weight: "12.000g",
-        image: "https://images.unsplash.com/photo-1599643478514-4a4f8f4a7c03?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=60"
-    }
-];
+// Products will be fetched from database
+let products = [];
 
 let cart = JSON.parse(localStorage.getItem('sri_renga_cart')) || [];
 let currentMainFilter = 'all';
 let currentSubFilter = 'all-silver';
 
-function init() {
+async function init() {
+    await fetchRates();
+    await fetchProducts();
     renderProducts();
     updateCartUI();
     setupEventListeners();
     setupFilterListeners();
+}
+
+async function fetchRates() {
+    try {
+        const today = new Date();
+        const yyyy = today.getFullYear();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const formattedDate = `${yyyy}-${mm}-${dd}`;
+
+        const response = await fetch(`/api/rates?date=${formattedDate}`);
+        if (!response.ok) return;
+        const data = await response.json();
+
+        const goldRateEl = document.getElementById('gold-rate');
+        const silverRateEl = document.getElementById('silver-rate');
+        const rateDateEl = document.getElementById('rate-date');
+
+        if (goldRateEl && data.gold_rate) {
+            goldRateEl.innerText = `₹${data.gold_rate.toLocaleString('en-IN')}`;
+        }
+        if (silverRateEl && data.silver_rate) {
+            silverRateEl.innerText = `₹${data.silver_rate.toLocaleString('en-IN')}`;
+        }
+        if (rateDateEl && data.date) {
+            // Format YYYY-MM-DD to DD MMM YYYY
+            const d = new Date(data.date);
+            if (!isNaN(d.getTime())) {
+                const options = { day: '2-digit', month: 'short', year: 'numeric' };
+                rateDateEl.innerText = d.toLocaleDateString('en-GB', options);
+            } else {
+                rateDateEl.innerText = data.date;
+            }
+        }
+    } catch (error) {
+        console.error("Error fetching rates:", error);
+    }
+}
+
+async function fetchProducts() {
+    try {
+        const response = await fetch('/api/products');
+        if (!response.ok) throw new Error("Failed to fetch products");
+        products = await response.json();
+    } catch (error) {
+        console.error("Error fetching products:", error);
+        products = [];
+    }
 }
 
 function createProductCardHTML(product) {
@@ -85,7 +71,7 @@ function createProductCardHTML(product) {
       <div class="product-category">${product.category}</div>
       <h3 class="product-title serif">${product.title}</h3>
       <div class="product-weight">
-        <i data-lucide="scale"></i> ${product.weight}
+        <i data-lucide="scale"></i> ${product.weight} g
       </div>
       <div class="product-actions">
         <button class="btn btn-outline btn-cart" onclick="addToCart(${product.id})">
@@ -99,16 +85,16 @@ function createProductCardHTML(product) {
 function getFilteredProducts() {
     return products.filter(product => {
         if (currentMainFilter === 'all') return true;
-        
+
         if (currentMainFilter === 'gold') {
             return product.category === 'Gold';
         }
-        
+
         if (currentMainFilter === 'silver') {
             if (currentSubFilter === 'all-silver') {
-                return product.category.startsWith('Silver');
+                return product.category === 'Silver' || (product.category && product.category.startsWith('Silver'));
             }
-            return product.category === currentSubFilter;
+            return product.sub_category === currentSubFilter || product.category === currentSubFilter;
         }
         return true;
     });
@@ -117,9 +103,9 @@ function getFilteredProducts() {
 function renderProducts() {
     const container = document.getElementById('products-container');
     if (!container) return; // If not on home page
-    
+
     const filteredProducts = getFilteredProducts();
-    
+
     if (filteredProducts.length === 0) {
         container.innerHTML = '<p style="grid-column: 1 / -1; text-align: center; color: var(--text-muted); padding: 3rem;">No products found in this category.</p>';
     } else {
@@ -144,9 +130,9 @@ function setupFilterListeners() {
             // Update active state
             mainBtns.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            
+
             currentMainFilter = e.target.getAttribute('data-filter');
-            
+
             // Toggle sub-filters for silver
             if (currentMainFilter === 'silver') {
                 subFilterContainer.classList.remove('hidden');
@@ -157,7 +143,7 @@ function setupFilterListeners() {
             } else {
                 subFilterContainer.classList.add('hidden');
             }
-            
+
             renderProducts();
         });
     });
@@ -191,7 +177,7 @@ function updateCartUI() {
           <img src="${item.image}" alt="${item.title}" class="cart-item-img">
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.title}</h4>
-            <div class="cart-item-weight">Weight: ${item.weight}</div>
+            <div class="cart-item-weight">Weight: ${item.weight} g</div>
             <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
           </div>
         </div>
