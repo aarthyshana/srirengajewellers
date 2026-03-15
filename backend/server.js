@@ -192,6 +192,19 @@ app.use('/uploads', express.static(uploadsDir));
         res.sendFile(path.join(__dirname, '..', 'index.html'));
     });
 
+    //delete products
+    app.delete('/api/products', (req, res) => {
+        db.run("DELETE FROM products", function(err) {
+            if (err) {
+                return res.status(500).json({error: err.message});
+            }
+
+            res.json({
+                message: "All procduts deleted"
+            });
+        });
+    });
+
 // Start the server
 app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
