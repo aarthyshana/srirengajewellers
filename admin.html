@@ -95,6 +95,7 @@
                 <a href="admin.html" class="nav-link active">Add Product</a>
                 <a href="admin-rates.html" class="nav-link">Update Rates</a>
                 <a href="admin-enquiries.html" class="nav-link">View Enquiries</a>
+                <a href="admin-delete.html" class="nav-link">Delete Product</a>
                 <a href="index.html" class="nav-link">Back to Store</a>
             </div>
         </div>
@@ -106,6 +107,12 @@
         <div id="messageBox" class="alert"></div>
 
         <form id="adminForm" class="admin-form">
+            <div class="form-group">
+                <label for="product_id">Product ID *</label>
+                <input type="text" id="product_id" name="product_id" required
+                    placeholder="e.g. RG-001">
+            </div>
+
             <div class="form-group">
                 <label for="title">Title *</label>
                 <input type="text" id="title" name="title" required

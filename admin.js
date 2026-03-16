@@ -49,6 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         const formData = new FormData();
+        formData.append('id', document.getElementById('product_id').value.trim());
         formData.append('title', document.getElementById('title').value);
         formData.append('category', categoryVal);
         if (subCategoryVal) formData.append('sub_category', subCategoryVal);
