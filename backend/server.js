@@ -1,5 +1,6 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
+//const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
@@ -35,7 +36,7 @@ app.use(express.static(path.join(__dirname, '..')));
 // Serve uploaded images statically
 app.use('/uploads', express.static(uploadsDir));
 
-// Connect to SQLite Database (this will create it if it doesn't exist)
+/* Connect to SQLite Database (this will create it if it doesn't exist)
 const db = new sqlite3.Database('./database.sqlite', (err) => {
     if (err) {
         console.error('Error opening database', err.message);
@@ -67,6 +68,22 @@ const db = new sqlite3.Database('./database.sqlite', (err) => {
             )`);
     }
 });
+*/
+//PostgreSQL connection
+const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
+
+pool.connect((err) => {
+    if (err) {
+        console.error('Error connecting to PostgreSQL', err.stack);
+    } else {
+        console.log('Connected to PostgreSQL database');
+    }
+});
 
 // Basic Test Route
 app.get('/api', (req, res) => {
@@ -74,7 +91,7 @@ app.get('/api', (req, res) => {
 });
 
 // Enquiry Route
-app.post('/api/enquiry', (req, res) => {
+app.post('/api/enquiry', async (req, res) => {
     const { name, phone, email, product_ids } = req.body;
 
     if (!name || !phone) {
@@ -85,7 +102,7 @@ app.post('/api/enquiry', (req, res) => {
     // Store product_ids as a JSON string if provided, else null
     const productIdsStr = product_ids && Array.isArray(product_ids) ? JSON.stringify(product_ids) : null;
 
-    db.run(sql, [name, phone, email || null, productIdsStr], function (err) {
+    /*db.run(sql, [name, phone, email || null, productIdsStr], function (err) {
         if (err) {
             console.error(err.message);
             return res.status(500).json({ error: "Failed to submit enquiry." });
@@ -94,43 +111,61 @@ app.post('/api/enquiry', (req, res) => {
             message: "Enquiry submitted successfully",
             enquiryId: this.lastID
         });
-    });
+    });*/
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO enquiries (name, phone, email, product_ids) VALUES ($1, $2, $3, $4) RETURNING id`,
+            [name, phone, email || null, productIdsStr]
+        );
+
+        res.json({
+            message: "Enquiry submitted successfully",
+            enquiryId: result.rows[0].id
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to submit enquiry." });
+    }
 });
 
 // Get all products
-app.get('/api/products', (req, res) => {
-    const sql = `SELECT * FROM products`;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to retrieve products." });
-        }
-        res.json(rows);
-    });
+app.get('/api/products', async (req, res) => {
+    try {
+        const result = await pool.query(`SELECT * FROM products`);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to retrieve products." });
+    }
 });
 
 // Delete a specific product by ID
-app.delete('/api/products/:id', (req, res) => {
+app.delete('/api/products/:id', async (req, res) => {
     const productId = req.params.id;
     if (!productId) {
         return res.status(400).json({ error: "Product ID is required" });
     }
 
-    const sql = `DELETE FROM products WHERE id = ?`;
-    db.run(sql, [productId], function(err) {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to delete product." });
-        }
-        if (this.changes === 0) {
+    try {
+        const result = await pool.query(
+            `DELETE FROM products WHERE id = $1`,
+            [productId]
+        );
+
+        if (result.rowCount === 0) {
             return res.status(404).json({ message: "Product not found." });
         }
+
         res.json({ message: "Product deleted successfully" });
-    });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to delete product." });
+    }
 });
 
 // Add a new product
-app.post('/api/products', upload.single('imageFile'), (req, res) => {
+app.post('/api/products', upload.single('imageFile'), async (req, res) => {
     const { id, title, category, sub_category, weight, image } = req.body;
 
     // Determine the final image path or URL
@@ -145,71 +180,90 @@ app.post('/api/products', upload.single('imageFile'), (req, res) => {
         return res.status(400).json({ error: "Product ID, title, category, and image are required." });
     }
 
-    const sql = `INSERT INTO products (id, title, category, sub_category, weight, image) VALUES (?, ?, ?, ?, ?, ?)`;
-    db.run(sql, [id, title, category, sub_category || null, weight || null, finalImage], function (err) {
-        if (err) {
-            console.error(err.message);
-            // Help the user if the ID they entered already exists (SQLite error 19 is constraint violation)
-            if (err.message.includes("UNIQUE constraint failed: products.id")) {
-                return res.status(400).json({ error: "Product ID already exists. Please use a unique ID." });
-            }
-            return res.status(500).json({ error: "Failed to add product." });
-        }
+    try {
+        await pool.query(
+            `INSERT INTO products (id, title, category, sub_category, weight, image)
+             VALUES ($1, $2, $3, $4, $5, $6)`,
+            [id, title, category, sub_category || null, weight || null, finalImage]
+        );
+
         res.status(201).json({
             message: "Product added successfully",
             productId: id,
             image: finalImage
         });
-    });
+    } catch (err) {
+        console.error(err.message);
+
+        if (err.code === '23505') {
+            return res.status(400).json({ error: "Product ID already exists." });
+        }
+
+        res.status(500).json({ error: "Failed to add product." });
+    }
 });
 
 // Add market rates
-app.post('/api/rates', (req, res) => {
+app.post('/api/rates', async (req, res) => {
     const { date, gold_rate, silver_rate } = req.body;
+
     if (!date || !gold_rate || !silver_rate) {
-        return res.status(400).json({ error: "Date, gold rate, and silver rate are required." });
+        return res.status(400).json({ error: "Required fields missing" });
     }
-    const sql = `INSERT INTO market_price (date, gold_rate, silver_rate) VALUES (?, ?, ?)`;
-    db.run(sql, [date, gold_rate, silver_rate], function (err) {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to update rates." });
-        }
-        res.status(201).json({ message: "Rates updated successfully", rateId: this.lastID });
-    });
+
+    try {
+        const result = await pool.query(
+            `INSERT INTO market_price (date, gold_rate, silver_rate)
+             VALUES ($1, $2, $3) RETURNING id`,
+            [date, gold_rate, silver_rate]
+        );
+
+        res.status(201).json({
+            message: "Rates updated successfully",
+            rateId: result.rows[0].id
+        });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to update rates." });
+    }
 });
 
 // Get market rates (latest or by date)
-app.get('/api/rates', (req, res) => {
+app.get('/api/rates', async (req, res) => {
     const { date } = req.query;
-    let sql = `SELECT * FROM market_price ORDER BY date DESC LIMIT 1`;
-    let params = [];
-    if (date) {
-        sql = `SELECT * FROM market_price WHERE date <= ? ORDER BY date DESC LIMIT 1`;
-        params = [date];
+    try {
+        let result;
+        if (date) {
+            result = await pool.query(
+                `SELECT * FROM market_price WHERE date <= $1 ORDER BY date DESC LIMIT 1`,
+                [date]
+            );
+        } else {
+            result = await pool.query(
+                `SELECT * FROM market_price ORDER BY date DESC LIMIT 1`
+            );
+        }
+        if (result.rows.length === 0) {
+            return res.status(404).json({ message: "No rates found." });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to fetch rates." });
     }
-    db.get(sql, params, (err, row) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to fetch rates." });
-        }
-        if (!row) {
-            return res.status(404).json({ message: "No rates found for the given date." });
-        }
-        res.json(row);
-    });
 });
 
 // Get all enquiries
-app.get('/api/enquiries', (req, res) => {
-    const sql = `SELECT * FROM enquiries ORDER BY created_at DESC`;
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error(err.message);
-            return res.status(500).json({ error: "Failed to retrieve enquiries." });
-        }
-        res.json(rows);
-    });
+app.get('/api/enquiries', async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT * FROM enquiries ORDER BY created_at DESC`
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: "Failed to retrieve enquiries." });
+    }
 });
 
 app.get('/', (req, res) => {

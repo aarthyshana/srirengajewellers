@@ -74,7 +74,7 @@ function createProductCardHTML(product) {
         <i data-lucide="scale"></i> ${product.weight} g
       </div>
       <div class="product-actions">
-        <button class="btn btn-outline btn-cart" onclick="addToCart(${product.id})">
+        <button class="btn btn-outline btn-cart" onclick="addToCart('${product.id}')">
           Add to Selection
         </button>
       </div>
@@ -178,7 +178,7 @@ function updateCartUI() {
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.title}</h4>
             <div class="cart-item-weight">Weight: ${item.weight} g</div>
-            <button class="remove-item" onclick="removeFromCart(${item.id})">Remove</button>
+            <button class="remove-item" onclick="removeFromCart('${item.id}')">Remove</button>
           </div>
         </div>
       `).join('');
@@ -188,8 +188,8 @@ function updateCartUI() {
 }
 
 window.addToCart = function (productId) {
-    const product = products.find(p => p.id === productId);
-    if (product && !cart.find(item => item.id === productId)) {
+    const product = products.find(p => String(p.id) === String(productId));
+    if (product && !cart.find(item => String(item.id) === String(productId))) {
         cart.push(product);
         localStorage.setItem('sri_renga_cart', JSON.stringify(cart));
         updateCartUI();
@@ -198,7 +198,7 @@ window.addToCart = function (productId) {
 };
 
 window.removeFromCart = function (productId) {
-    cart = cart.filter(item => item.id !== productId);
+    cart = cart.filter(item => String(item.id) !== String(productId));
     localStorage.setItem('sri_renga_cart', JSON.stringify(cart));
     updateCartUI();
 };
