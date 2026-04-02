@@ -98,7 +98,7 @@ app.post('/api/enquiry', async (req, res) => {
         return res.status(400).json({ error: "Name and phone are required." });
     }
 
-    const sql = `INSERT INTO enquiries (name, phone, email, product_ids) VALUES (?, ?, ?, ?)`;
+    //const sql = `INSERT INTO enquiries (name, phone, email, product_ids) VALUES (?, ?, ?, ?)`;
     // Store product_ids as a JSON string if provided, else null
     const productIdsStr = product_ids && Array.isArray(product_ids) ? JSON.stringify(product_ids) : null;
 

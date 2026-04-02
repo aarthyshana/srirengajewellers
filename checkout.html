@@ -199,7 +199,7 @@
             const product_ids = cartData.map(item => item.id);
 
             try {
-                const response = await fetch('http://localhost:3000/api/enquiry', {
+                const response = await fetch('/api/enquiry', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
