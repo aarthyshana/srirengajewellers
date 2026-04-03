@@ -3,16 +3,16 @@
 
 <head>
     <meta charset="UTF-8">
-    <script src="admin-auth.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sri Renga Jewellers - Delete Product</title>
+    <title>Sri Renga Jewellers - Admin Login</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         .admin-container {
-            max-width: 800px;
-            margin: 4rem auto;
+            max-width: 400px;
+            margin: 6rem auto;
             padding: 2rem;
+            text-align: center;
         }
 
         .admin-header {
@@ -23,6 +23,7 @@
 
         .admin-form .form-group {
             margin-bottom: 1.5rem;
+            text-align: left;
         }
 
         .admin-form label {
@@ -53,13 +54,7 @@
             border-radius: var(--radius-md);
             margin-bottom: 1.5rem;
             display: none;
-        }
-
-        .alert.success {
-            background-color: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-            display: block;
+            text-align: left;
         }
 
         .alert.error {
@@ -78,36 +73,51 @@
                 <i data-lucide="gem"></i> Sri Renga Jewelers
             </a>
             <div class="nav-links">
-                <a href="admin.html" class="nav-link">Add Product</a>
-                <a href="admin-rates.html" class="nav-link">Update Rates</a>
-                <a href="admin-enquiries.html" class="nav-link">View Enquiries</a>
-                <a href="admin-delete.html" class="nav-link active">Delete Product</a>
                 <a href="index.html" class="nav-link">Back to Store</a>
             </div>
         </div>
     </nav>
 
     <main class="admin-container glass">
-        <h1 class="admin-header serif">Admin Panel - Delete Product</h1>
+        <h1 class="admin-header serif">Admin Login</h1>
 
-        <div id="messageBox" class="alert"></div>
+        <div id="messageBox" class="alert error" style="display: none;"></div>
 
-        <form id="adminDeleteForm" class="admin-form">
+        <form id="loginForm" class="admin-form">
             <div class="form-group">
-                <label for="productId">Product ID *</label>
-                <input type="text" id="productId" name="productId" required
-                    placeholder="Enter Product ID to delete">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter username">
             </div>
 
-            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem; background-color: #dc3545; border-color: #dc3545;">
-                Delete Product
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter password">
+            </div>
+
+            <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">
+                Login
             </button>
         </form>
     </main>
 
-    <script src="admin-delete.js"></script>
     <script>
         lucide.createIcons();
+
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value;
+            const pass = document.getElementById('password').value;
+            const messageBox = document.getElementById('messageBox');
+
+            // Hardcoded credentials
+            if (user === 'admin' && pass === '123pass') {
+                sessionStorage.setItem('isAuthenticated', 'true');
+                window.location.href = 'admin.html';
+            } else {
+                messageBox.textContent = 'Invalid username or password.';
+                messageBox.style.display = 'block';
+            }
+        });
     </script>
 </body>
 
