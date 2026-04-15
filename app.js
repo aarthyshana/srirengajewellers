@@ -3,7 +3,8 @@ let products = [];
 
 let cart = JSON.parse(localStorage.getItem('sri_renga_cart')) || [];
 let currentMainFilter = 'all';
-let currentSubFilter = 'all-silver';
+let currentGoldSubFilter = 'all-gold';
+let currentSilverSubFilter = 'all-silver';
 
 async function init() {
     await fetchRates();
@@ -63,6 +64,13 @@ async function fetchProducts() {
 }
 
 function createProductCardHTML(product) {
+    let productSpecDisplay = '';
+    if (product.weight) {
+        productSpecDisplay = `<div class="product-weight"><i data-lucide="scale"></i> ${product.weight} g</div>`;
+    } else if (product.price) {
+        productSpecDisplay = `<div class="product-price"><i data-lucide="tag"></i> ₹${product.price}</div>`;
+    }
+
     return `
     <div class="product-card glass">
       <div class="product-img-container">
@@ -70,9 +78,7 @@ function createProductCardHTML(product) {
       </div>
       <div class="product-category">${product.category}</div>
       <h3 class="product-title serif">${product.title}</h3>
-      <div class="product-weight">
-        <i data-lucide="scale"></i> ${product.weight} g
-      </div>
+      ${productSpecDisplay}
       <div class="product-actions">
         <button class="btn btn-outline btn-cart" onclick="addToCart('${product.id}')">
           Add to Selection
@@ -87,14 +93,17 @@ function getFilteredProducts() {
         if (currentMainFilter === 'all') return true;
 
         if (currentMainFilter === 'gold') {
-            return product.category === 'Gold';
+            if (currentGoldSubFilter === 'all-gold') {
+                return product.category === 'Gold' || (product.category && product.category.startsWith('Gold'));
+            }
+            return product.sub_category === currentGoldSubFilter || product.category === currentGoldSubFilter;
         }
 
         if (currentMainFilter === 'silver') {
-            if (currentSubFilter === 'all-silver') {
+            if (currentSilverSubFilter === 'all-silver') {
                 return product.category === 'Silver' || (product.category && product.category.startsWith('Silver'));
             }
-            return product.sub_category === currentSubFilter || product.category === currentSubFilter;
+            return product.sub_category === currentSilverSubFilter || product.category === currentSilverSubFilter;
         }
         return true;
     });
@@ -121,7 +130,8 @@ function renderProducts() {
 function setupFilterListeners() {
     const mainBtns = document.querySelectorAll('.filter-btn');
     const subBtns = document.querySelectorAll('.sub-filter-btn');
-    const subFilterContainer = document.getElementById('silver-sub-filters');
+    const goldSubFilterContainer = document.getElementById('gold-sub-filters');
+    const silverSubFilterContainer = document.getElementById('silver-sub-filters');
 
     if (!mainBtns.length) return;
 
@@ -133,15 +143,28 @@ function setupFilterListeners() {
 
             currentMainFilter = e.target.getAttribute('data-filter');
 
-            // Toggle sub-filters for silver
-            if (currentMainFilter === 'silver') {
-                subFilterContainer.classList.remove('hidden');
-                // Reset sub-filter to all when explicitly clicking main filter
-                subBtns.forEach(b => b.classList.remove('active'));
-                subBtns[0].classList.add('active');
-                currentSubFilter = 'all-silver';
+            // Toggle sub-filters for gold and silver
+            if (currentMainFilter === 'gold') {
+                goldSubFilterContainer.classList.remove('hidden');
+                silverSubFilterContainer.classList.add('hidden');
+                // Reset Gold sub-filter
+                subBtns.forEach(b => {
+                    if (b.closest('#gold-sub-filters')) b.classList.remove('active');
+                });
+                document.querySelector('#gold-sub-filters .sub-filter-btn').classList.add('active');
+                currentGoldSubFilter = 'all-gold';
+            } else if (currentMainFilter === 'silver') {
+                silverSubFilterContainer.classList.remove('hidden');
+                goldSubFilterContainer.classList.add('hidden');
+                // Reset Silver sub-filter
+                subBtns.forEach(b => {
+                    if (b.closest('#silver-sub-filters')) b.classList.remove('active');
+                });
+                document.querySelector('#silver-sub-filters .sub-filter-btn').classList.add('active');
+                currentSilverSubFilter = 'all-silver';
             } else {
-                subFilterContainer.classList.add('hidden');
+                silverSubFilterContainer.classList.add('hidden');
+                goldSubFilterContainer.classList.add('hidden');
             }
 
             renderProducts();
@@ -150,9 +173,20 @@ function setupFilterListeners() {
 
     subBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
-            subBtns.forEach(b => b.classList.remove('active'));
+            // Only toggle within the active sub-filter container
+            const container = e.target.closest('.sub-filter-container');
+            const buttonsInContainer = container.querySelectorAll('.sub-filter-btn');
+            
+            buttonsInContainer.forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
-            currentSubFilter = e.target.getAttribute('data-subfilter');
+            
+            const subfilterValue = e.target.getAttribute('data-subfilter');
+            if (container.id === 'gold-sub-filters') {
+                currentGoldSubFilter = subfilterValue;
+            } else if (container.id === 'silver-sub-filters') {
+                currentSilverSubFilter = subfilterValue;
+            }
+            
             renderProducts();
         });
     });
@@ -172,16 +206,24 @@ function updateCartUI() {
             cartItemsContainer.innerHTML = '<p class="cart-empty">Your selection is empty.</p>';
             if (cartTotalWeight) cartTotalWeight.innerText = "0";
         } else {
-            cartItemsContainer.innerHTML = cart.map(item => `
+            cartItemsContainer.innerHTML = cart.map(item => {
+                let specDisplay = '';
+                if (item.weight) {
+                    specDisplay = `Weight: ${item.weight} g`;
+                } else if (item.price) {
+                    specDisplay = `Price: ₹${item.price}`;
+                }
+                return `
         <div class="cart-item">
           <img src="${item.image}" alt="${item.title}" class="cart-item-img">
           <div class="cart-item-details">
             <h4 class="cart-item-title">${item.title}</h4>
-            <div class="cart-item-weight">Weight: ${item.weight} g</div>
+            <div class="cart-item-weight">${specDisplay}</div>
             <button class="remove-item" onclick="removeFromCart('${item.id}')">Remove</button>
           </div>
         </div>
-      `).join('');
+      `;
+            }).join('');
             if (cartTotalWeight) cartTotalWeight.innerText = cart.length;
         }
     }

@@ -104,7 +104,7 @@
     </nav>
 
     <main class="admin-container glass">
-        <h1 class="admin-header serif">Admin Panel - Add Jewelry</h1>
+        <h1 class="admin-header serif">Admin Panel - Add Jewellery</h1>
 
         <div id="messageBox" class="alert"></div>
 
@@ -133,19 +133,50 @@
                 <label for="sub_category">Sub Category (for Silver) *</label>
                 <select id="sub_category" name="sub_category">
                     <option value="" disabled selected>Select Sub Category</option>
-                    <option value="Silver Rings">Rings</option>
-                    <option value="Silver Chains">Chains</option>
-                    <option value="Silver Pendants">Pendants</option>
-                    <option value="Silver Studs">Studs</option>
-                    <option value="Silver Bracelets">Bracelets</option>
-                    <option value="Silver Toe Rings">Toe Rings</option>
+                    <!-- Gold Categories -->
+                    <option value="Gold Pendants">Gold Pendants</option>
+                    <option value="Gold Chains">Gold Chains</option>
+                    <option value="Gold Earrings">Gold Earrings</option>
+                    <option value="Gold Rings">Gold Rings</option>
+                    <option value="Gold Dollars">Gold Dollars</option>
+                    <option value="Gold Kids">Gold Kids Jewellery</option>
+                    <option value="Gold Ear Cuffs">Gold Ear Cuffs</option>
+                    <option value="Gold Nose Pin">Gold Nose Pin</option>
+                    <option value="Gold Thaali">Gold Thaali Add-ons</option>
+                    <option value="Gold Coins">Gold Coins</option>
+                    <!-- Silver Categories -->
+                    <option value="Silver Rings">Silver Rings</option>
+                    <option value="Silver Chains">Silver Chains</option>
+                    <option value="Silver Pendants">Silver Pendants</option>
+                    <option value="Silver Studs">Silver Studs</option>
+                    <option value="Silver Bracelets">Silver Bracelets</option>
+                    <option value="Silver Toe Rings">Silver Toe Rings</option>
+                    <option value="Silver Divinity">Silver Divinity Items</option>
+                    <option value="Silver Anklets">Silver Anklets</option>
+                    <option value="Silver Dollar">Silver Dollar</option>
+                    <option value="Silver Maalai">Silver Maalai</option>
+                    <option value="Silver Bar">Silver Bar</option>
+                    <option value="Silver Coin">Silver Coin</option>
+                    <option value="Silver Poojai">Silver Poojai Items</option>
+                    <option value="Silver Gift">Silver Gift Items</option>
+                    <option value="Silver Bangles">Silver Bangles</option>
+                    <option value="Silver Baby">Silver Baby Items</option>
                 </select>
             </div>
 
             <div class="form-group">
-                <label for="weight">Weight *</label>
-                <input type="text" id="weight" name="weight" required placeholder="e.g. 45.500g">
+                <label for="weight">Weight (grams) - Leave blank if using Item Price</label>
+                <input type="text" id="weight" name="weight" placeholder="e.g. 45.500">
             </div>
+
+            <div class="form-group">
+                <label for="price">Item Price (₹) - Leave blank if using Weight</label>
+                <input type="text" id="price" name="price" placeholder="e.g. 5500">
+            </div>
+            
+            <p style="color: var(--text-muted); font-size: 0.9em; margin-bottom: 1rem; background: rgba(212, 175, 55, 0.1); padding: 0.75rem; border-radius: 4px;">
+                <strong>Note:</strong> Provide either Weight (for weight-based items like traditional jewellery) OR Item Price (for fixed-price items like coins). At least one must be filled.
+            </p>
 
             <div class="form-group"
                 style="display: flex; flex-direction: column; gap: 0.5rem; background: rgba(255,255,255,0.5); padding: 1rem; border-radius: 8px;">

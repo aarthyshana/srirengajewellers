@@ -9,9 +9,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Show/hide sub-category based on category selection
     categorySelect.addEventListener('change', (e) => {
-        if (e.target.value === 'Silver') {
+        if (e.target.value === 'Silver' || e.target.value === 'Gold') {
             subCategoryGroup.style.display = 'block';
             subCategorySelect.setAttribute('required', 'required');
+            // Update label based on selection
+            const label = subCategoryGroup.querySelector('label');
+            if (e.target.value === 'Gold') {
+                label.textContent = 'Sub Category (for Gold) *';
+            } else {
+                label.textContent = 'Sub Category (for Silver) *';
+            }
         } else {
             subCategoryGroup.style.display = 'none';
             subCategorySelect.removeAttribute('required');
@@ -39,12 +46,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const categoryVal = document.getElementById('category').value;
         let subCategoryVal = document.getElementById('sub_category').value;
+        const weightVal = document.getElementById('weight').value.trim();
+        const priceVal = document.getElementById('price').value.trim();
 
-        // For gold, the subcategory mapping isn't used
-        if (categoryVal === 'Gold') {
-            subCategoryVal = null;
-        } else if (categoryVal === 'Silver' && !subCategoryVal) {
-            showMessage('Sub Category is required for Silver products.', 'error');
+        // Sub-category is required for both Gold and Silver
+        if ((categoryVal === 'Gold' || categoryVal === 'Silver') && !subCategoryVal) {
+            showMessage(`Sub Category is required for ${categoryVal} products.`, 'error');
+            return;
+        }
+
+        // At least one of weight or price must be provided
+        if (!weightVal && !priceVal) {
+            showMessage('Either Weight or Item Price must be provided.', 'error');
             return;
         }
 
@@ -53,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
         formData.append('title', document.getElementById('title').value);
         formData.append('category', categoryVal);
         if (subCategoryVal) formData.append('sub_category', subCategoryVal);
-        formData.append('weight', document.getElementById('weight').value);
+        if (weightVal) formData.append('weight', weightVal);
+        if (priceVal) formData.append('price', priceVal);
 
         const imageFile = document.getElementById('imageFile').files[0];
 

@@ -452,6 +452,16 @@ h6,
   margin-bottom: 1.5rem;
 }
 
+.product-price {
+  font-size: 0.95rem;
+  color: var(--gold-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  font-weight: 600;
+}
+
 .product-actions {
   margin-top: auto;
 }

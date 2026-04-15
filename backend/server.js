@@ -166,7 +166,7 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // Add a new product
 app.post('/api/products', upload.single('imageFile'), async (req, res) => {
-    const { id, title, category, sub_category, weight, image } = req.body;
+    const { id, title, category, sub_category, weight, price, image } = req.body;
 
     // Determine the final image path or URL
     let finalImage = null;
@@ -180,11 +180,16 @@ app.post('/api/products', upload.single('imageFile'), async (req, res) => {
         return res.status(400).json({ error: "Product ID, title, category, and image are required." });
     }
 
+    // At least one of weight or price must be provided
+    if (!weight && !price) {
+        return res.status(400).json({ error: "Either weight or price must be provided." });
+    }
+
     try {
         await pool.query(
-            `INSERT INTO products (id, title, category, sub_category, weight, image)
-             VALUES ($1, $2, $3, $4, $5, $6)`,
-            [id, title, category, sub_category || null, weight || null, finalImage]
+            `INSERT INTO products (id, title, category, sub_category, weight, price, image)
+             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+            [id, title, category, sub_category || null, weight || null, price || null, finalImage]
         );
 
         res.status(201).json({
