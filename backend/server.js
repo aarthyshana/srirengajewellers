@@ -1,5 +1,8 @@
+require('dotenv').config();
+
 const express = require('express');
-//const sqlite3 = require('sqlite3').verbose();
+const sqlite3 = require('sqlite3').verbose();
+const { open } = require('sqlite');
 const { Pool } = require('pg');
 const cors = require('cors');
 const path = require('path');
@@ -8,6 +11,9 @@ const fs = require('fs');
 
 const app = express();
 const port = process.env.port || 3000;
+const usePostgres = Boolean(process.env.DATABASE_URL);
+let pool = null;
+let sqliteDb = null;
 
 // Ensure uploads directory exists
 const uploadsDir = path.join(__dirname, 'uploads');
@@ -36,54 +42,92 @@ app.use(express.static(path.join(__dirname, '..')));
 // Serve uploaded images statically
 app.use('/uploads', express.static(uploadsDir));
 
-/* Connect to SQLite Database (this will create it if it doesn't exist)
-const db = new sqlite3.Database('./database.sqlite', (err) => {
-    if (err) {
-        console.error('Error opening database', err.message);
-    } else {
-        console.log('Connected to the SQLite database.');
+async function initDb() {
+    if (usePostgres) {
+        pool = new Pool({
+            connectionString: process.env.DATABASE_URL,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        });
 
-        // Create your initial tables here
-        db.run(`CREATE TABLE IF NOT EXISTS enquiries (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                phone TEXT NOT NULL,
-                email TEXT,
-                product_ids TEXT,
-                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-            )`);
-        db.run(`CREATE TABLE IF NOT EXISTS products (
-                id TEXT PRIMARY KEY,
-                title TEXT NOT NULL,
-                category TEXT NOT NULL,
-                sub_category TEXT,
-                weight TEXT,
-                image TEXT
-            )`);
-        db.run(`CREATE TABLE IF NOT EXISTS market_price (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                date DATE NOT NULL,
-                gold_rate REAL NOT NULL,
-                silver_rate REAL NOT NULL
-            )`);
-    }
-});
-*/
-//PostgreSQL connection
-const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
-
-pool.connect((err) => {
-    if (err) {
-        console.error('Error connecting to PostgreSQL', err.stack);
+        try {
+            await pool.connect();
+            console.log('Connected to PostgreSQL database');
+        } catch (err) {
+            console.error('Error connecting to PostgreSQL', err.stack);
+            throw err;
+        }
     } else {
-        console.log('Connected to PostgreSQL database');
+        const sqlitePath = path.join(__dirname, '..', 'database.sqlite');
+        sqliteDb = await open({
+            filename: sqlitePath,
+            driver: sqlite3.Database
+        });
+
+        await sqliteDb.run(`CREATE TABLE IF NOT EXISTS enquiries (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            email TEXT,
+            product_ids TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )`);
+
+        await sqliteDb.run(`CREATE TABLE IF NOT EXISTS products (
+            id TEXT PRIMARY KEY,
+            title TEXT NOT NULL,
+            category TEXT NOT NULL,
+            sub_category TEXT,
+            weight TEXT,
+            price TEXT,
+            image TEXT
+        )`);
+
+        await sqliteDb.run(`CREATE TABLE IF NOT EXISTS market_price (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date DATE NOT NULL,
+            gold_rate REAL NOT NULL,
+            silver_rate REAL NOT NULL
+        )`);
+
+        console.log('Connected to SQLite database at', sqlitePath);
     }
-});
+}
+
+initDb()
+    .then(() => {
+        app.listen(port, () => {
+            console.log(`Server is running on http://localhost:${port}`);
+        });
+    })
+    .catch(err => {
+        console.error('Database initialization failed:', err);
+        process.exit(1);
+    });
+
+async function runDb(sql, params = []) {
+    if (usePostgres) {
+        return await pool.query(sql, params);
+    }
+    return await sqliteDb.run(sql, params);
+}
+
+async function allDb(sql, params = []) {
+    if (usePostgres) {
+        return await pool.query(sql, params);
+    }
+    const rows = await sqliteDb.all(sql, params);
+    return { rows };
+}
+
+async function getDb(sql, params = []) {
+    if (usePostgres) {
+        const result = await pool.query(sql, params);
+        return result.rows[0];
+    }
+    return await sqliteDb.get(sql, params);
+}
 
 // Basic Test Route
 app.get('/api', (req, res) => {
@@ -114,15 +158,25 @@ app.post('/api/enquiry', async (req, res) => {
     });*/
 
     try {
-        const result = await pool.query(
-            `INSERT INTO enquiries (name, phone, email, product_ids) VALUES ($1, $2, $3, $4) RETURNING id`,
-            [name, phone, email || null, productIdsStr]
-        );
-
-        res.json({
-            message: "Enquiry submitted successfully",
-            enquiryId: result.rows[0].id
-        });
+        if (usePostgres) {
+            const result = await runDb(
+                `INSERT INTO enquiries (name, phone, email, product_ids) VALUES ($1, $2, $3, $4) RETURNING id`,
+                [name, phone, email || null, productIdsStr]
+            );
+            res.json({
+                message: "Enquiry submitted successfully",
+                enquiryId: result.rows[0].id
+            });
+        } else {
+            const result = await runDb(
+                `INSERT INTO enquiries (name, phone, email, product_ids) VALUES (?, ?, ?, ?)`,
+                [name, phone, email || null, productIdsStr]
+            );
+            res.json({
+                message: "Enquiry submitted successfully",
+                enquiryId: result.lastID
+            });
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: "Failed to submit enquiry." });
@@ -132,7 +186,7 @@ app.post('/api/enquiry', async (req, res) => {
 // Get all products
 app.get('/api/products', async (req, res) => {
     try {
-        const result = await pool.query(`SELECT * FROM products`);
+        const result = await allDb(`SELECT * FROM products`);
         res.json(result.rows);
     } catch (err) {
         console.error(err.message);
@@ -148,13 +202,22 @@ app.delete('/api/products/:id', async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
-            `DELETE FROM products WHERE id = $1`,
-            [productId]
-        );
-
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Product not found." });
+        if (usePostgres) {
+            const result = await runDb(
+                `DELETE FROM products WHERE id = $1`,
+                [productId]
+            );
+            if (result.rowCount === 0) {
+                return res.status(404).json({ message: "Product not found." });
+            }
+        } else {
+            const result = await runDb(
+                `DELETE FROM products WHERE id = ?`,
+                [productId]
+            );
+            if (result.changes === 0) {
+                return res.status(404).json({ message: "Product not found." });
+            }
         }
 
         res.json({ message: "Product deleted successfully" });
@@ -186,11 +249,19 @@ app.post('/api/products', upload.single('imageFile'), async (req, res) => {
     }
 
     try {
-        await pool.query(
-            `INSERT INTO products (id, title, category, sub_category, weight, price, image)
-             VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-            [id, title, category, sub_category || null, weight || null, price || null, finalImage]
-        );
+        if (usePostgres) {
+            await runDb(
+                `INSERT INTO products (id, title, category, sub_category, weight, price, image)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+                [id, title, category, sub_category || null, weight || null, price || null, finalImage]
+            );
+        } else {
+            await runDb(
+                `INSERT INTO products (id, title, category, sub_category, weight, price, image)
+                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [id, title, category, sub_category || null, weight || null, price || null, finalImage]
+            );
+        }
 
         res.status(201).json({
             message: "Product added successfully",
@@ -200,7 +271,11 @@ app.post('/api/products', upload.single('imageFile'), async (req, res) => {
     } catch (err) {
         console.error(err.message);
 
-        if (err.code === '23505') {
+        if (usePostgres && err.code === '23505') {
+            return res.status(400).json({ error: "Product ID already exists." });
+        }
+
+        if (!usePostgres && err.message && err.message.includes('UNIQUE constraint failed')) {
             return res.status(400).json({ error: "Product ID already exists." });
         }
 
@@ -217,16 +292,27 @@ app.post('/api/rates', async (req, res) => {
     }
 
     try {
-        const result = await pool.query(
-            `INSERT INTO market_price (date, gold_rate, silver_rate)
-             VALUES ($1, $2, $3) RETURNING id`,
-            [date, gold_rate, silver_rate]
-        );
-
-        res.status(201).json({
-            message: "Rates updated successfully",
-            rateId: result.rows[0].id
-        });
+        if (usePostgres) {
+            const result = await runDb(
+                `INSERT INTO market_price (date, gold_rate, silver_rate)
+                 VALUES ($1, $2, $3) RETURNING id`,
+                [date, gold_rate, silver_rate]
+            );
+            res.status(201).json({
+                message: "Rates updated successfully",
+                rateId: result.rows[0].id
+            });
+        } else {
+            const result = await runDb(
+                `INSERT INTO market_price (date, gold_rate, silver_rate)
+                 VALUES (?, ?, ?)`,
+                [date, gold_rate, silver_rate]
+            );
+            res.status(201).json({
+                message: "Rates updated successfully",
+                rateId: result.lastID
+            });
+        }
     } catch (err) {
         console.error(err.message);
         res.status(500).json({ error: "Failed to update rates." });
@@ -239,13 +325,17 @@ app.get('/api/rates', async (req, res) => {
     try {
         let result;
         if (date) {
-            result = await pool.query(
-                `SELECT * FROM market_price WHERE date <= $1 ORDER BY date DESC LIMIT 1`,
+            result = await allDb(
+                usePostgres
+                    ? `SELECT * FROM market_price WHERE date <= $1 ORDER BY date DESC LIMIT 1`
+                    : `SELECT * FROM market_price WHERE date <= ? ORDER BY date DESC LIMIT 1`,
                 [date]
             );
         } else {
-            result = await pool.query(
-                `SELECT * FROM market_price ORDER BY date DESC LIMIT 1`
+            result = await allDb(
+                usePostgres
+                    ? `SELECT * FROM market_price ORDER BY date DESC LIMIT 1`
+                    : `SELECT * FROM market_price ORDER BY date DESC LIMIT 1`
             );
         }
         if (result.rows.length === 0) {
@@ -261,8 +351,10 @@ app.get('/api/rates', async (req, res) => {
 // Get all enquiries
 app.get('/api/enquiries', async (req, res) => {
     try {
-        const result = await pool.query(
-            `SELECT * FROM enquiries ORDER BY created_at DESC`
+        const result = await allDb(
+            usePostgres
+                ? `SELECT * FROM enquiries ORDER BY created_at DESC`
+                : `SELECT * FROM enquiries ORDER BY created_at DESC`
         );
         res.json(result.rows);
     } catch (err) {
@@ -273,11 +365,4 @@ app.get('/api/enquiries', async (req, res) => {
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'index.html'));
-});
-
-
-
-// Start the server
-app.listen(port, () => {
-    console.log(`Server is running on http://localhost:${port}`);
 });
