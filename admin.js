@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const weightVal = document.getElementById('weight').value.trim();
         const priceVal = document.getElementById('price').value.trim();
 
-        // Sub-category is required for both Gold and Silver
+        // Sub-category is required for Gold and Silver, but not for Gold Plated(GP) SILVER
         if ((categoryVal === 'Gold' || categoryVal === 'Silver') && !subCategoryVal) {
             showMessage(`Sub Category is required for ${categoryVal} products.`, 'error');
             return;

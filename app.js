@@ -5,6 +5,7 @@ let cart = JSON.parse(localStorage.getItem('sri_renga_cart')) || [];
 let currentMainFilter = 'all';
 let currentGoldSubFilter = 'all-gold';
 let currentSilverSubFilter = 'all-silver';
+let currentGPSilverSubFilter = 'all-gp-silver';
 
 async function init() {
     await fetchRates();
@@ -105,6 +106,11 @@ function getFilteredProducts() {
             }
             return product.sub_category === currentSilverSubFilter || product.category === currentSilverSubFilter;
         }
+
+        if (currentMainFilter === 'gp-silver') {
+            return product.category === 'Gold Plated(GP) SILVER';
+        }
+
         return true;
     });
 }
@@ -162,6 +168,11 @@ function setupFilterListeners() {
                 });
                 document.querySelector('#silver-sub-filters .sub-filter-btn').classList.add('active');
                 currentSilverSubFilter = 'all-silver';
+            } else if (currentMainFilter === 'gp-silver') {
+                // Gold Plated Silver has no sub-categories
+                silverSubFilterContainer.classList.add('hidden');
+                goldSubFilterContainer.classList.add('hidden');
+                currentGPSilverSubFilter = 'all-gp-silver';
             } else {
                 silverSubFilterContainer.classList.add('hidden');
                 goldSubFilterContainer.classList.add('hidden');
