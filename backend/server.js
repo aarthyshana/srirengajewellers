@@ -225,10 +225,15 @@ app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
         return res.status(400).json({ error: 'Image file is required.' });
     }
 
+    if (!cloudinaryCloudName) {
+        return res.status(500).json({ error: 'Cloudinary cloud name is not configured.' });
+    }
+
     try {
         const form = new FormData();
-        form.append('file', new Blob([req.file.buffer]), req.file.originalname);
-        form.append('upload_preset', 'srirenga_jewellers');
+        form.append('file', req.file.buffer, req.file.originalname);
+        form.append('upload_preset', process.env.CLOUDINARY_UPLOAD_PRESET || 'srirenga_jewellers');
+        form.append('folder', process.env.CLOUDINARY_FOLDER || 'srirenga_jewellers');
 
         const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, {
             method: 'POST',
@@ -236,15 +241,26 @@ app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
         });
 
         if (!response.ok) {
-            const errorData = await response.json();
-            return res.status(400).json({ error: errorData.error?.message || 'Cloudinary upload failed.' });
+            const errorData = await response.json().catch(() => null);
+            console.error('Cloudinary upload failed response:', {
+                status: response.status,
+                statusText: response.statusText,
+                body: errorData
+            });
+            return res.status(400).json({
+                error: errorData?.error?.message || 'Cloudinary upload failed.',
+                details: errorData || {
+                    status: response.status,
+                    statusText: response.statusText
+                }
+            });
         }
 
         const data = await response.json();
         res.status(201).json({ url: data.secure_url });
     } catch (error) {
         console.error('Cloudinary upload error:', error);
-        res.status(500).json({ error: 'Failed to upload image to Cloudinary.' });
+        res.status(500).json({ error: 'Failed to upload image to Cloudinary.', details: error.message });
     }
 });
 
