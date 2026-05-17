@@ -9,28 +9,23 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 
+// Cloudinary configuration
+const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
+const cloudinaryApiKey = process.env.CLOUDINARY_API_KEY;
+const cloudinaryApiSecret = process.env.CLOUDINARY_API_SECRET;
+
+if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
+    console.warn('Cloudinary credentials not found in .env file');
+}
+
 const app = express();
 const port = process.env.port || 3000;
 const usePostgres = Boolean(process.env.DATABASE_URL);
 let pool = null;
 let sqliteDb = null;
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
-}
-
-// Multer storage config
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, uploadsDir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + '-' + file.originalname.replace(/\s+/g, '-'));
-    }
-});
-const upload = multer({ storage: storage });
+// Multer memory storage (for temporary file handling before upload to Cloudinary)
+const upload = multer({ storage: multer.memoryStorage() });
 
 // Middleware
 app.use(cors());
@@ -38,9 +33,6 @@ app.use(express.json());
 
 // serve frontend
 app.use(express.static(path.join(__dirname, '..')));
-
-// Serve uploaded images statically
-app.use('/uploads', express.static(uploadsDir));
 
 async function initDb() {
     if (usePostgres) {
@@ -227,17 +219,41 @@ app.delete('/api/products/:id', async (req, res) => {
     }
 });
 
-// Add a new product
-app.post('/api/products', upload.single('imageFile'), async (req, res) => {
+// Upload an image to Cloudinary and return a URL for product metadata storage
+app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
+    if (!req.file) {
+        return res.status(400).json({ error: 'Image file is required.' });
+    }
+
+    try {
+        const form = new FormData();
+        form.append('file', new Blob([req.file.buffer]), req.file.originalname);
+        form.append('upload_preset', 'srirenga_jewellers');
+
+        const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, {
+            method: 'POST',
+            body: form
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            return res.status(400).json({ error: errorData.error?.message || 'Cloudinary upload failed.' });
+        }
+
+        const data = await response.json();
+        res.status(201).json({ url: data.secure_url });
+    } catch (error) {
+        console.error('Cloudinary upload error:', error);
+        res.status(500).json({ error: 'Failed to upload image to Cloudinary.' });
+    }
+});
+
+// Add a new product (expects image URL from separate /api/upload-image call)
+app.post('/api/products', async (req, res) => {
     const { id, title, category, sub_category, weight, price, image } = req.body;
 
-    // Determine the final image path or URL
-    let finalImage = null;
-    if (req.file) {
-        finalImage = `/uploads/${req.file.filename}`;
-    } else if (image) {
-        finalImage = image;
-    }
+    // The image URL should come from a prior /api/upload-image call
+    const finalImage = image;
 
     if (!id || !title || !category || !finalImage) {
         return res.status(400).json({ error: "Product ID, title, category, and image are required." });

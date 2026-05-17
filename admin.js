@@ -61,19 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        const formData = new FormData();
-        formData.append('id', document.getElementById('product_id').value.trim());
-        formData.append('title', document.getElementById('title').value);
-        formData.append('category', categoryVal);
-        if (subCategoryVal) formData.append('sub_category', subCategoryVal);
-        if (weightVal) formData.append('weight', weightVal);
-        if (priceVal) formData.append('price', priceVal);
-
         const imageFile = document.getElementById('imageFile').files[0];
 
-        if (imageFile) {
-            formData.append('imageFile', imageFile);
-        } else {
+        if (!imageFile) {
             showMessage('Please upload an image file.', 'error');
             return;
         }
@@ -83,9 +73,39 @@ document.addEventListener('DOMContentLoaded', () => {
             submitBtn.disabled = true;
             submitBtn.textContent = 'Adding...';
 
+            // Upload the image first to get a URL, then store only the URL in the product record.
+            const uploadForm = new FormData();
+            uploadForm.append('imageFile', imageFile);
+
+            const uploadResponse = await fetch('/api/upload-image', {
+                method: 'POST',
+                body: uploadForm
+            });
+
+            const uploadData = await uploadResponse.json();
+            if (!uploadResponse.ok) {
+                showMessage(uploadData.error || 'Failed to upload image.', 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Add Product to Store';
+                return;
+            }
+
+            const payload = {
+                id: document.getElementById('product_id').value.trim(),
+                title: document.getElementById('title').value,
+                category: categoryVal,
+                image: uploadData.url
+            };
+            if (subCategoryVal) payload.sub_category = subCategoryVal;
+            if (weightVal) payload.weight = weightVal;
+            if (priceVal) payload.price = priceVal;
+
             const response = await fetch('/api/products', {
                 method: 'POST',
-                body: formData // sending FormData directly (fetch will set multipart boundary)
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
             });
 
             const data = await response.json();
