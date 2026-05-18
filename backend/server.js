@@ -8,6 +8,7 @@ const cors = require('cors');
 const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
+const crypto = require('crypto');
 
 // Cloudinary configuration
 const cloudinaryCloudName = process.env.CLOUDINARY_CLOUD_NAME;
@@ -225,15 +226,22 @@ app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
         return res.status(400).json({ error: 'Image file is required.' });
     }
 
-    if (!cloudinaryCloudName) {
-        return res.status(500).json({ error: 'Cloudinary cloud name is not configured.' });
+    if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
+        return res.status(500).json({ error: 'Cloudinary credentials are not fully configured.' });
     }
 
     try {
+        const timestamp = Math.floor(Date.now() / 1000);
+        const folder = process.env.CLOUDINARY_FOLDER || 'srirenga_jewellers';
+        const paramsToSign = `folder=${folder}&timestamp=${timestamp}`;
+        const signature = crypto.createHash('sha1').update(paramsToSign + cloudinaryApiSecret).digest('hex');
+
         const form = new FormData();
         form.append('file', req.file.buffer, req.file.originalname);
-        form.append('upload_preset', process.env.CLOUDINARY_UPLOAD_PRESET || 'srirenga_jewellers');
-        form.append('folder', process.env.CLOUDINARY_FOLDER || 'srirenga_jewellers');
+        form.append('api_key', cloudinaryApiKey);
+        form.append('timestamp', timestamp.toString());
+        form.append('signature', signature);
+        form.append('folder', folder);
 
         const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudinaryCloudName}/image/upload`, {
             method: 'POST',
