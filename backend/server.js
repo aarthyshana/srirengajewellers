@@ -222,6 +222,7 @@ app.delete('/api/products/:id', async (req, res) => {
 
 // Upload an image to Cloudinary and return a URL for product metadata storage
 app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
+    console.log('Received /api/upload-image', req.method);
     if (!req.file) {
         return res.status(400).json({ error: 'Image file is required.' });
     }
@@ -270,6 +271,10 @@ app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
         console.error('Cloudinary upload error:', error);
         res.status(500).json({ error: 'Failed to upload image to Cloudinary.', details: error.message });
     }
+});
+
+app.get('/api/upload-image', (req, res) => {
+    res.status(200).json({ message: 'Use POST /api/upload-image with multipart/form-data to upload an image.' });
 });
 
 // Add a new product (expects image URL from separate /api/upload-image call)

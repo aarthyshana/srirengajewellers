@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('admin.js loaded and DOMContentLoaded fired');
     const categorySelect = document.getElementById('category');
     const subCategoryGroup = document.getElementById('subCategoryGroup');
     const subCategorySelect = document.getElementById('sub_category');
@@ -67,6 +68,8 @@ document.addEventListener('DOMContentLoaded', () => {
             showMessage('Please upload an image file.', 'error');
             return;
         }
+
+        console.log('Submitting admin form, image file:', imageFile.name);
 
         try {
             const submitBtn = adminForm.querySelector('button[type="submit"]');
