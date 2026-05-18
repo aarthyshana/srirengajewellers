@@ -16,7 +16,9 @@ const cloudinaryApiKey = process.env.CLOUDINARY_API_KEY;
 const cloudinaryApiSecret = process.env.CLOUDINARY_API_SECRET;
 
 if (!cloudinaryCloudName || !cloudinaryApiKey || !cloudinaryApiSecret) {
-    console.warn('Cloudinary credentials not found in .env file');
+    console.warn('Cloudinary credentials are missing or incomplete in .env file');
+} else {
+    console.log('Cloudinary credentials loaded');
 }
 
 const app = express();

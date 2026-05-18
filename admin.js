@@ -87,7 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const uploadData = await uploadResponse.json();
             if (!uploadResponse.ok) {
-                showMessage(uploadData.error || 'Failed to upload image.', 'error');
+                console.error('Upload failed:', uploadData);
+                const detail = uploadData.details ? ` Details: ${JSON.stringify(uploadData.details)}` : '';
+                showMessage(`${uploadData.error || 'Failed to upload image.'}${detail}`, 'error');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Add Product to Store';
                 return;
