@@ -240,7 +240,7 @@ app.post('/api/upload-image', upload.single('imageFile'), async (req, res) => {
         const signature = crypto.createHash('sha1').update(paramsToSign + cloudinaryApiSecret).digest('hex');
 
         const form = new FormData();
-        form.append('file', req.file.buffer, req.file.originalname);
+        form.append('file', new Blob([req.file.buffer]), req.file.originalname);
         form.append('api_key', cloudinaryApiKey);
         form.append('timestamp', timestamp.toString());
         form.append('signature', signature);
